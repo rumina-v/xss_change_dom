@@ -1,0 +1,61 @@
+@page
+@model IndexModel
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>XSS — изменение DOM</title>
+    <link rel="stylesheet" href="/site.css" />
+</head>
+<body>
+<main id="page">
+    <h1>XSS — изменение DOM</h1>
+
+    <form method="post" class="input">
+    @Html.AntiForgeryToken()
+
+    <label for="comment"><strong>Введите данные на вход для проверки</strong></label>
+    <textarea id="comment" name="Comment" rows="5">@Model.Comment</textarea>
+
+    <div>
+        <button type="submit">Проверить</button>
+        <button type="submit" name="Clear" value="1">Очистить</button>
+    </div>
+</form>
+
+    <div class="grid">
+        <section class="card vulnerable">
+            <h2>1. Уязвимый вывод</h2>
+            <p>Аналог <code>@@Html.Raw(comment)</code>: строка становится частью HTML.</p>
+            <div class="comment-box">
+                @Html.Raw(Model.Comment)
+            </div>
+        </section>
+
+        <section class="card safe">
+            <h2>2. Безопасный вывод</h2>
+            <p>Обычный Razor-вывод кодирует специальные символы.</p>
+            <div class="comment-box">
+                @Model.Comment
+            </div>
+        </section>
+    </div>
+
+    <section class="explain">
+        <h2>Что происходит</h2>
+        <ol>
+            <li>До атаки оба блока выглядят одинаково.</li>
+            <li>В уязвимом блоке браузер получает HTML из пользовательского ввода.</li>
+            <li>JavaScript из этого HTML добавляет <strong>новый элемент</strong> в верх страницы.</li>
+            <li>В безопасном блоке тот же ввод остаётся текстом — новый элемент не появляется.</li>
+        </ol>
+    </section>
+
+    <section class="payload">
+        <h2>Пример проверки</h2>
+        <pre><code>&lt;img src=x onerror="const e=document.createElement('div');e.className='attack-result';e.textContent='⚠ Этот элемент добавлен из кода, полученного от пользователя и помещенного в уязвимумую среду';document.querySelector('#page').prepend(e);this.remove()"&gt;</code></pre>
+    </section>
+</main>
+</body>
+</html>
